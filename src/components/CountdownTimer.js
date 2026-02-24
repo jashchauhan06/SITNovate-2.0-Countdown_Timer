@@ -68,7 +68,10 @@ function CountdownTimer() {
 
   return (
     <div className="container">
-      <h1>SITNOVATE 2.0 <br /> 24 Hour Hackathon</h1>
+      <div className="heading">
+        <h1 className="title-main">SITN<span className="title-small">ovate</span> 2.0</h1>
+        <p className="title-sub">24 Hour Hackathon</p>
+      </div>
       <div className="countdown">
         <div className="time-unit">
           <div className="digits">
