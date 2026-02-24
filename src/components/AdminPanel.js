@@ -21,6 +21,10 @@ function AdminPanel() {
   const [time, setTime] = useState({ hours: '00', minutes: '00', seconds: '00' });
   const [statusText, setStatusText] = useState('Stopped');
   const [timeString, setTimeString] = useState('24:00:00');
+  const [customHours, setCustomHours] = useState('');
+  const [customMinutes, setCustomMinutes] = useState('');
+  const [customSeconds, setCustomSeconds] = useState('');
+  const [setTimerMsg, setSetTimerMsg] = useState('');
   const timerStateRef = useRef(null);
   const animFrameRef = useRef(null);
 
@@ -61,6 +65,31 @@ function AdminPanel() {
       endTime: null,
       remainingTime: 24 * 60 * 60 * 1000
     });
+  };
+
+  const setCustomTimer = async (e) => {
+    e.preventDefault();
+    const h = parseInt(customHours, 10) || 0;
+    const m = parseInt(customMinutes, 10) || 0;
+    const s = parseInt(customSeconds, 10) || 0;
+    const totalMs = (h * 3600 + m * 60 + s) * 1000;
+
+    if (totalMs <= 0) {
+      setSetTimerMsg('Please enter a valid time greater than 0.');
+      return;
+    }
+
+    await saveTimerState({
+      isRunning: false,
+      endTime: null,
+      remainingTime: totalMs
+    });
+
+    setSetTimerMsg(`Timer set to ${h}h ${m}m ${s}s. Press Start to begin.`);
+    setCustomHours('');
+    setCustomMinutes('');
+    setCustomSeconds('');
+    setTimeout(() => setSetTimerMsg(''), 4000);
   };
 
   const computeDisplay = useCallback(() => {
@@ -154,6 +183,57 @@ function AdminPanel() {
         <button onClick={stopTimer} className="btn btn-stop">Stop Timer</button>
         <button onClick={resetTimer} className="btn btn-reset">Reset Timer</button>
       </div>
+
+      {/* ─── Set Custom Time ─── */}
+      <div className="custom-timer-section">
+        <h2>Set Custom Time</h2>
+        <p className="custom-timer-hint">Override the timer to start from a specific point</p>
+        <form onSubmit={setCustomTimer} className="custom-timer-form">
+          <div className="custom-timer-inputs">
+            <div className="custom-input-group">
+              <input
+                type="number"
+                min="0"
+                max="99"
+                value={customHours}
+                onChange={(e) => setCustomHours(e.target.value)}
+                placeholder="0"
+                className="custom-time-input"
+              />
+              <span className="custom-input-label">Hours</span>
+            </div>
+            <span className="custom-input-sep">:</span>
+            <div className="custom-input-group">
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={customMinutes}
+                onChange={(e) => setCustomMinutes(e.target.value)}
+                placeholder="0"
+                className="custom-time-input"
+              />
+              <span className="custom-input-label">Min</span>
+            </div>
+            <span className="custom-input-sep">:</span>
+            <div className="custom-input-group">
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={customSeconds}
+                onChange={(e) => setCustomSeconds(e.target.value)}
+                placeholder="0"
+                className="custom-time-input"
+              />
+              <span className="custom-input-label">Sec</span>
+            </div>
+          </div>
+          <button type="submit" className="btn btn-set">Set Timer</button>
+        </form>
+        {setTimerMsg && <p className="custom-timer-msg">{setTimerMsg}</p>}
+      </div>
+
       <div className="admin-info">
         <p>Current Status: <span>{statusText}</span></p>
         <p>Time Remaining: <span>{timeString}</span></p>

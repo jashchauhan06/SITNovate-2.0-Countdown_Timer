@@ -259,6 +259,107 @@ h1 {
     text-transform: uppercase;
 }
 
+/* ─── Custom Timer Section ─── */
+.custom-timer-section {
+    background: #1a1a1a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.custom-timer-section h2 {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #888;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+
+.custom-timer-hint {
+    font-size: 0.75rem;
+    color: #555;
+    margin-bottom: 1.25rem;
+}
+
+.custom-timer-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.custom-timer-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.custom-time-input {
+    width: 72px;
+    padding: 0.65rem 0;
+    font-size: 1.6rem;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    text-align: center;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.custom-time-input::-webkit-outer-spin-button,
+.custom-time-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.custom-time-input:focus {
+    border-color: #f59e0b;
+}
+
+.custom-input-label {
+    font-size: 0.6rem;
+    color: #555;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.custom-input-sep {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0.1rem;
+    margin-top: -1.2rem;
+}
+
+.btn-set {
+    background: #f59e0b;
+    color: #000;
+}
+
+.custom-timer-msg {
+    margin-top: 0.85rem;
+    font-size: 0.8rem;
+    color: #f59e0b;
+    font-weight: 500;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
     h1 {
@@ -293,5 +394,15 @@ h1 {
     .btn {
         width: 100%;
         max-width: 280px;
+    }
+
+    .custom-time-input {
+        width: 56px;
+        font-size: 1.2rem;
+        padding: 0.5rem 0;
+    }
+
+    .custom-input-sep {
+        font-size: 1.2rem;
     }
 }
