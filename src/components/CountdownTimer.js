@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import FlipCard from './FlipCard';
+import GitHubPushReminder from './GitHubPushReminder';
 import { subscribeToTimer } from '../utils/timerStorage';
 
 function CountdownTimer() {
@@ -100,6 +101,7 @@ function CountdownTimer() {
       <div className="status" style={{ background: status.bg, color: status.color }}>
         {status.text}
       </div>
+      <GitHubPushReminder />
     </div>
   );
 }
