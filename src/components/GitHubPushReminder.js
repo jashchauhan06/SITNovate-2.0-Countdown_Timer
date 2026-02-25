@@ -1,30 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { subscribeToGitHubTimer } from '../utils/timerStorage';
 
 function GitHubPushReminder() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [pushCount, setPushCount] = useState(1);
   const [showReminder, setShowReminder] = useState(false);
+  const animFrameRef = useRef(null);
+  const endTimeRef = useRef(null);
+  const isRunningRef = useRef(false);
 
   useEffect(() => {
-    const unsubscribe = subscribeToGitHubTimer((endTime, count) => {
-      console.log('GitHub Timer Data:', { endTime, count }); // Debug log
-      setPushCount(count || 1); // Fallback to 1 if count is undefined
+    const unsubscribe = subscribeToGitHubTimer((endTime, count, running) => {
+      console.log('GitHub Timer Data:', { endTime, count, running }); // Debug log
+      setPushCount(count || 1);
+      endTimeRef.current = endTime;
+      isRunningRef.current = running;
       
-      const updateTimer = () => {
+      // Cancel any existing animation frame
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+      
+      if (!running) {
+        // Timer is paused, just set the static time
         const remaining = Math.max(0, endTime - Date.now());
+        setTimeLeft(remaining);
+        setShowReminder(false);
+        return;
+      }
+      
+      // Timer is running, start animation loop
+      const updateTimer = () => {
+        if (!isRunningRef.current) return;
+        
+        const remaining = Math.max(0, endTimeRef.current - Date.now());
         setTimeLeft(remaining);
         setShowReminder(remaining === 0);
 
         if (remaining > 0) {
-          requestAnimationFrame(updateTimer);
+          animFrameRef.current = requestAnimationFrame(updateTimer);
         }
       };
 
       updateTimer();
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
   }, []);
 
   const formatTime = (ms) => {

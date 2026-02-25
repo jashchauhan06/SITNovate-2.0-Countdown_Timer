@@ -93,8 +93,12 @@ export function subscribeToGitHubTimer(callback) {
     const mainState = snapshot.exists() ? snapshot.val() : { ...DEFAULT_STATE };
     
     if (!mainState.isRunning) {
-      // Timer is stopped, show default state
-      callback(Date.now() + THREE_HOURS, 1);
+      // Timer is stopped/paused, calculate based on remaining time
+      const remainingTime = mainState.remainingTime || 0;
+      const { pushNumber, timeLeft } = calculatePushCycle(remainingTime);
+      
+      // Return the time left in current cycle, but don't count down
+      callback(Date.now() + timeLeft, pushNumber, false);
       return;
     }
     
@@ -106,7 +110,7 @@ export function subscribeToGitHubTimer(callback) {
     const { pushNumber, timeLeft } = calculatePushCycle(remainingTime);
     const endTime = Date.now() + timeLeft;
     
-    callback(endTime, pushNumber);
+    callback(endTime, pushNumber, true);
   });
   
   return unsubscribe;
