@@ -34,6 +34,20 @@ export function subscribeToTimer(callback) {
 const GITHUB_TIMER_REF = 'githubPushTimer';
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 
+// Calculate which push cycle we're in based on the main timer
+function calculatePushCycle(mainTimerRemainingMs) {
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  const elapsed = TWENTY_FOUR_HOURS - mainTimerRemainingMs;
+  const pushNumber = Math.floor(elapsed / THREE_HOURS) + 1;
+  const timeInCurrentCycle = elapsed % THREE_HOURS;
+  const timeLeftInCycle = THREE_HOURS - timeInCurrentCycle;
+  
+  return {
+    pushNumber: Math.min(pushNumber, 8), // Max 8 pushes in 24 hours
+    timeLeft: timeLeftInCycle
+  };
+}
+
 // Save GitHub timer data to Firebase
 export function saveGitHubTimer(endTime, pushCount) {
   return set(ref(db, GITHUB_TIMER_REF), { endTime, pushCount });
@@ -51,25 +65,50 @@ export async function getGitHubTimer() {
   return { endTime: newEndTime, pushCount: 1 };
 }
 
-// Real-time listener for GitHub timer
+// Sync GitHub timer with main timer
+export async function syncGitHubTimerWithMain() {
+  const mainTimerState = await getTimerState();
+  
+  if (!mainTimerState.isRunning) {
+    // If main timer is not running, don't update GitHub timer
+    return;
+  }
+  
+  let remainingTime = mainTimerState.remainingTime;
+  if (mainTimerState.endTime) {
+    remainingTime = Math.max(0, mainTimerState.endTime - Date.now());
+  }
+  
+  const { pushNumber, timeLeft } = calculatePushCycle(remainingTime);
+  const newEndTime = Date.now() + timeLeft;
+  
+  await saveGitHubTimer(newEndTime, pushNumber);
+}
+
+// Real-time listener for GitHub timer that syncs with main timer
 export function subscribeToGitHubTimer(callback) {
-  const timerRef = ref(db, GITHUB_TIMER_REF);
+  const timerRef = ref(db, TIMER_REF);
+  
   const unsubscribe = onValue(timerRef, async (snapshot) => {
-    let data;
-    if (snapshot.exists()) {
-      data = snapshot.val();
-      // Ensure pushCount exists, default to 1 if missing
-      if (!data.pushCount) {
-        data.pushCount = 1;
-        await saveGitHubTimer(data.endTime, 1);
-      }
-    } else {
-      const endTime = Date.now() + THREE_HOURS;
-      data = { endTime, pushCount: 1 };
-      await saveGitHubTimer(endTime, 1);
+    const mainState = snapshot.exists() ? snapshot.val() : { ...DEFAULT_STATE };
+    
+    if (!mainState.isRunning) {
+      // Timer is stopped, show default state
+      callback(Date.now() + THREE_HOURS, 1);
+      return;
     }
-    callback(data.endTime, data.pushCount);
+    
+    let remainingTime = mainState.remainingTime;
+    if (mainState.endTime) {
+      remainingTime = Math.max(0, mainState.endTime - Date.now());
+    }
+    
+    const { pushNumber, timeLeft } = calculatePushCycle(remainingTime);
+    const endTime = Date.now() + timeLeft;
+    
+    callback(endTime, pushNumber);
   });
+  
   return unsubscribe;
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import FlipCard from './FlipCard';
-import { subscribeToTimer, saveTimerState, getTimerState, subscribeToGitHubTimer, resetGitHubTimer } from '../utils/timerStorage';
+import { subscribeToTimer, saveTimerState, getTimerState } from '../utils/timerStorage';
 
 // SHA-256 hash of the secret key — plaintext password never appears in code
 // To change the password, run: node -e "require('crypto').createHash('sha256').update('YOUR_NEW_PASSWORD').digest('hex')"
@@ -25,12 +25,8 @@ function AdminPanel() {
   const [customMinutes, setCustomMinutes] = useState('');
   const [customSeconds, setCustomSeconds] = useState('');
   const [setTimerMsg, setSetTimerMsg] = useState('');
-  const [githubTimeLeft, setGithubTimeLeft] = useState(0);
-  const [githubPushCount, setGithubPushCount] = useState(1);
-  const [githubMsg, setGithubMsg] = useState('');
   const timerStateRef = useRef(null);
   const animFrameRef = useRef(null);
-  const githubAnimFrameRef = useRef(null);
 
   const handleKeySubmit = async (e) => {
     e.preventDefault();
@@ -124,29 +120,6 @@ function AdminPanel() {
     }
   }, []);
 
-  const handleResetGitHubTimer = async () => {
-    await resetGitHubTimer();
-    setGithubMsg('GitHub timer reset to 3 hours!');
-    setTimeout(() => setGithubMsg(''), 3000);
-  };
-
-  const formatGitHubTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  const getOrdinalSuffix = (num) => {
-    const j = num % 10;
-    const k = num % 100;
-    if (j === 1 && k !== 11) return 'st';
-    if (j === 2 && k !== 12) return 'nd';
-    if (j === 3 && k !== 13) return 'rd';
-    return 'th';
-  };
-
   useEffect(() => {
     const unsubscribe = subscribeToTimer((state) => {
       timerStateRef.current = state;
@@ -165,34 +138,6 @@ function AdminPanel() {
       }
     };
   }, [computeDisplay]);
-
-  useEffect(() => {
-    const unsubscribe = subscribeToGitHubTimer((endTime, count) => {
-      setGithubPushCount(count);
-      
-      const updateGitHubTimer = () => {
-        const remaining = Math.max(0, endTime - Date.now());
-        setGithubTimeLeft(remaining);
-
-        if (remaining > 0) {
-          githubAnimFrameRef.current = requestAnimationFrame(updateGitHubTimer);
-        }
-      };
-
-      if (githubAnimFrameRef.current) {
-        cancelAnimationFrame(githubAnimFrameRef.current);
-      }
-
-      updateGitHubTimer();
-    });
-
-    return () => {
-      unsubscribe();
-      if (githubAnimFrameRef.current) {
-        cancelAnimationFrame(githubAnimFrameRef.current);
-      }
-    };
-  }, []);
 
   // Auth gate — rendered AFTER all hooks have been called
   if (!authenticated) {
@@ -287,26 +232,6 @@ function AdminPanel() {
           <button type="submit" className="btn btn-set">Set Timer</button>
         </form>
         {setTimerMsg && <p className="custom-timer-msg">{setTimerMsg}</p>}
-      </div>
-
-      {/* ─── GitHub Push Timer Control ─── */}
-      <div className="custom-timer-section">
-        <h2>GitHub Push Reminder</h2>
-        <p className="custom-timer-hint">Manage the 3-hour GitHub push reminder timer</p>
-        <div className="github-admin-display">
-          <div className="github-admin-time">
-            <span className="github-admin-label">
-              {githubPushCount}{getOrdinalSuffix(githubPushCount)} Push - Time Remaining:
-            </span>
-            <span className={`github-admin-timer ${githubTimeLeft === 0 ? 'time-up' : ''}`}>
-              {formatGitHubTime(githubTimeLeft)}
-            </span>
-          </div>
-          <button onClick={handleResetGitHubTimer} className="btn btn-set">
-            Reset to 3 Hours
-          </button>
-        </div>
-        {githubMsg && <p className="custom-timer-msg">{githubMsg}</p>}
       </div>
 
       <div className="admin-info">
